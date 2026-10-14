@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laporan · SIMTU</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="laporan" data-title="Laporan" data-crumb="Statistik kegiatan dan persuratan">
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+
+    <main class="content">
+      <div class="flex between center mb-4" style="flex-wrap:wrap;gap:12px">
+        <div class="chips">
+          <button class="chip active">Bulanan</button>
+          <button class="chip" onclick="alert('Tampilan triwulan (simulasi).')">Triwulan</button>
+          <button class="chip" onclick="alert('Tampilan semester (simulasi).')">Semester</button>
+          <button class="chip" onclick="alert('Tampilan tahunan (simulasi).')">Tahunan</button>
+        </div>
+        <div class="flex gap-2">
+          <input class="input" type="month" value="2026-10" style="width:auto">
+          <button class="btn btn-outline" onclick="alert('Export PDF (simulasi)')">⬇️ PDF</button>
+          <button class="btn btn-outline" onclick="alert('Export Excel (simulasi)')">⬇️ Excel</button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="ic blue">📅</div><div><div class="val">11</div><div class="lbl">Kegiatan Bulan Ini</div></div></div>
+        <div class="stat"><div class="ic orange">✉️</div><div><div class="val">6</div><div class="lbl">Permohonan Surat</div></div></div>
+        <div class="stat"><div class="ic green">⚡</div><div><div class="val">1.8 <span style="font-size:14px;font-weight:600">hari</span></div><div class="lbl">Rata-rata Lead Time</div></div></div>
+        <div class="stat"><div class="ic purple">📊</div><div><div class="val">83%</div><div class="lbl">Tingkat Kepatuhan Lead Time</div></div></div>
+      </div>
+
+      <div class="grid-2 mb-4">
+        <div class="card">
+          <div class="card-h"><h3>📊 Surat per Jenis (Oktober 2026)</h3></div>
+          <div class="card-b">
+            <div class="chart">
+              <div class="bar-col"><div class="bar" style="height:60%"><span>2</span></div><div class="lbl">Undangan</div></div>
+              <div class="bar-col"><div class="bar" style="height:30%"><span>1</span></div><div class="lbl">Tugas</div></div>
+              <div class="bar-col"><div class="bar" style="height:30%"><span>1</span></div><div class="lbl">Keterangan</div></div>
+              <div class="bar-col"><div class="bar" style="height:30%"><span>1</span></div><div class="lbl">Permohonan</div></div>
+              <div class="bar-col"><div class="bar" style="height:30%"><span>1</span></div><div class="lbl">Edaran</div></div>
+              <div class="bar-col"><div class="bar" style="height:30%"><span>1</span></div><div class="lbl">SK</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h3>🏢 Kegiatan per Unit</h3></div>
+          <div class="card-b">
+            <div id="unitChart"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-h"><h3>📈 Tren Kegiatan 6 Bulan Terakhir</h3></div>
+          <div class="card-b">
+            <div class="chart">
+              <div class="bar-col"><div class="bar" style="height:40%"><span>6</span></div><div class="lbl">Mei</div></div>
+              <div class="bar-col"><div class="bar" style="height:55%"><span>8</span></div><div class="lbl">Jun</div></div>
+              <div class="bar-col"><div class="bar" style="height:30%"><span>4</span></div><div class="lbl">Jul</div></div>
+              <div class="bar-col"><div class="bar" style="height:70%"><span>10</span></div><div class="lbl">Agu</div></div>
+              <div class="bar-col"><div class="bar" style="height:80%"><span>12</span></div><div class="lbl">Sep</div></div>
+              <div class="bar-col"><div class="bar" style="height:75%;background:linear-gradient(180deg,#16a34a,#22c55e)"><span>11</span></div><div class="lbl">Okt</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h3>⏱️ Kinerja Proses Surat</h3></div>
+          <div class="card-b">
+            <dl class="info-list" style="grid-template-columns:1fr 1fr">
+              <dt>Rata-rata verifikasi TU</dt><dd>4 jam</dd>
+              <dt>Rata-rata approval</dt><dd>6 jam</dd>
+              <dt>Rata-rata pemrosesan</dt><dd>1 hari kerja</dd>
+              <dt>Total lead time</dt><dd>1.8 hari kerja</dd>
+              <dt>Surat selesai tepat waktu</dt><dd style="color:var(--success)">83%</dd>
+              <dt>Surat mendadak</dt><dd style="color:var(--danger)">2 (33%)</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-title">📋 Ringkasan Kegiatan Bulan Ini</div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead><tr><th>Kategori</th><th>Jumlah</th><th>Unit Terkait</th><th>Persentase</th></tr></thead>
+            <tbody id="tblRekap"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (!getCurrentUser()) return;
+
+  const events = expandEvents(2026, 9);
+  const perUnit = {};
+  events.forEach(e => perUnit[e.unit] = (perUnit[e.unit]||0)+1);
+  const max = Math.max(...Object.values(perUnit));
+
+  document.getElementById('unitChart').innerHTML = Object.entries(perUnit).map(([u,c]) => `
+    <div style="margin-bottom:14px">
+      <div class="flex between center" style="font-size:12.5px;margin-bottom:6px">
+        <span style="font-weight:600">${unitName(u)}</span><b>${c} kegiatan</b>
+      </div>
+      <div class="progress"><i style="width:${(c/max)*100}%"></i></div>
+    </div>`).join('');
+
+  const perCat = {};
+  events.forEach(e => perCat[e.kategori] = (perCat[e.kategori]||0)+1);
+  document.getElementById('tblRekap').innerHTML = Object.entries(perCat).map(([c,n]) => `
+    <tr>
+      <td><span class="badge badge-${catColor(c)}">${catName(c)}</span></td>
+      <td style="font-weight:700">${n}</td>
+      <td class="text-sm">${[...new Set(events.filter(e=>e.kategori===c).map(e=>unitName(e.unit)))].join(', ')}</td>
+      <td>
+        <div class="flex center gap-2">
+          <div class="progress" style="width:120px"><i style="width:${(n/events.length)*100}%"></i></div>
+          <span class="text-sm">${Math.round((n/events.length)*100)}%</span>
+        </div>
+      </td>
+    </tr>`).join('');
+});
+</script>
+</body>
+</html>

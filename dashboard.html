@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard · SIMTU</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="dashboard" data-title="Dashboard" data-crumb="Ringkasan aktivitas Tata Usaha hari ini">
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+
+    <main class="content">
+      <div class="alert alert-info">
+        ℹ️ <div><b>Selamat datang di SIMTU.</b> Semua kegiatan wajib diinput minimal <b>H-7</b>, dan permohonan surat minimal <b>H-3</b> hari kerja.</div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats">
+        <div class="stat">
+          <div class="ic blue">📅</div>
+          <div>
+            <div class="val" id="statKegiatan">0</div>
+            <div class="lbl">Kegiatan Bulan Ini</div>
+            <div class="trend up">▲ 12% dari bulan lalu</div>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="ic orange">⏳</div>
+          <div>
+            <div class="val" id="statPending">0</div>
+            <div class="lbl">Surat Menunggu Proses</div>
+            <div class="trend down">▼ Perlu tindakan TU</div>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="ic green">✅</div>
+          <div>
+            <div class="val" id="statSelesai">0</div>
+            <div class="lbl">Surat Selesai Bulan Ini</div>
+            <div class="trend up">▲ 8 surat dari bulan lalu</div>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="ic red">⚠️</div>
+          <div>
+            <div class="val" id="statMendadak">0</div>
+            <div class="lbl">Permohonan Mendadak</div>
+            <div class="trend down">▼ Perlu approval khusus</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-dash">
+        <!-- LEFT -->
+        <div style="display:flex;flex-direction:column;gap:20px">
+
+          <!-- Agenda Hari Ini -->
+          <div class="card">
+            <div class="card-h">
+              <h3>📌 Agenda TU Hari Ini</h3>
+              <span class="sub" id="todayLabel"></span>
+              <div class="spacer"></div>
+              <a class="btn btn-ghost btn-sm" href="kalender.html">Lihat Kalender →</a>
+            </div>
+            <div class="tl" id="agendaHariIni"></div>
+          </div>
+
+          <!-- Kegiatan Mendatang -->
+          <div class="card">
+            <div class="card-h">
+              <h3>🗓️ Kegiatan 7 Hari ke Depan</h3>
+              <div class="spacer"></div>
+              <a class="btn btn-ghost btn-sm" href="kegiatan.html">Semua Kegiatan →</a>
+            </div>
+            <div class="tl" id="upcoming"></div>
+          </div>
+
+          <!-- Surat Terbaru -->
+          <div class="card">
+            <div class="card-h">
+              <h3>✉️ Permohonan Surat Terbaru</h3>
+              <div class="spacer"></div>
+              <a class="btn btn-ghost btn-sm" href="surat.html">Lihat Semua →</a>
+            </div>
+            <div class="card-b tight">
+              <div class="table-wrap">
+                <table class="tbl">
+                  <thead><tr><th>No. Permohonan</th><th>Jenis</th><th>Pemohon</th><th>Dibutuhkan</th><th>Status</th><th></th></tr></thead>
+                  <tbody id="suratTerbaru"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT -->
+        <div style="display:flex;flex-direction:column;gap:20px">
+
+          <div class="card">
+            <div class="card-h"><h3>📊 Statistik Surat</h3></div>
+            <div class="card-b">
+              <div style="font-size:12.5px;color:var(--g500);margin-bottom:14px">Total 6 permohonan bulan Oktober 2026</div>
+              <div id="suratStat"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-h">
+              <h3>📅 Kalender Mini</h3>
+              <div class="spacer"></div>
+              <a class="btn btn-ghost btn-sm" href="kalender.html">Detail →</a>
+            </div>
+            <div id="miniCal" style="border-radius:0 0 10px 10px;overflow:hidden"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-h">
+              <h3>🔔 Notifikasi</h3>
+              <div class="spacer"></div>
+              <span class="badge badge-danger" id="notifCount">0 Baru</span>
+            </div>
+            <div class="tl" id="notifList"></div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const u = getCurrentUser();
+  if (!u) return;
+
+  /* ---------- STATS ---------- */
+  const now = new Date(2026, 9, 14); // demo: 14 Oktober 2026
+  const monthEvents = expandEvents(2026, 9);
+  document.getElementById('statKegiatan').textContent = monthEvents.length;
+  document.getElementById('statPending').textContent =
+    LETTER_REQUESTS.filter(s => !['selesai','ditolak'].includes(s.status)).length;
+  document.getElementById('statSelesai').textContent =
+    LETTER_REQUESTS.filter(s => s.status === 'selesai').length;
+  document.getElementById('statMendadak').textContent =
+    LETTER_REQUESTS.filter(s => s.prioritas !== 'normal').length;
+
+  /* ---------- AGENDA HARI INI ---------- */
+  const today = '2026-10-14';
+  document.getElementById('todayLabel').textContent = fmtDate(today, true);
+  const todayEvents = expandEvents(2026, 9).filter(e => e._date === today);
+  const agendaEl = document.getElementById('agendaHariIni');
+  if (todayEvents.length === 0){
+    agendaEl.innerHTML = `<div class="empty" style="padding:36px"><div class="ic">🌤️</div><h4>Tidak ada agenda hari ini</h4><p>Belum ada kegiatan terjadwal untuk tanggal ini.</p></div>`;
+  } else {
+    agendaEl.innerHTML = todayEvents.map(e => `
+      <div class="tl-item">
+        <div class="tl-date" style="background:var(--primary-light);color:var(--primary-dark)">
+          <b>${e.waktu.split(' ')[0].split(':')[0]}</b><span>${e.waktu.split(' ')[0].split(':')[1]}</span>
+        </div>
+        <div class="tl-body">
+          <h4>${e.judul}</h4>
+          <p><span>📍 ${e.lokasi}</span><span>🏷️ ${catName(e.kategori)}</span><span>👤 ${e.pic}</span></p>
+        </div>
+        <span class="badge badge-${catColor(e.kategori)}" style="align-self:center">${unitName(e.unit)}</span>
+      </div>`).join('');
+  }
+
+  /* ---------- UPCOMING 7 HARI ---------- */
+  const upcoming = [];
+  for (let i=1; i<=7; i++){
+    const d = new Date(2026, 9, 14 + i);
+    const iso = d.toISOString().slice(0,10);
+    expandEvents(2026, 9).filter(e => e._date === iso).forEach(e => upcoming.push({ ...e, _date:iso }));
+  }
+  const upEl = document.getElementById('upcoming');
+  if (upcoming.length === 0){
+    upEl.innerHTML = `<div class="empty" style="padding:36px"><div class="ic">📭</div><h4>Tidak ada kegiatan</h4></div>`;
+  } else {
+    upEl.innerHTML = upcoming.slice(0,6).map(e => {
+      const d = new Date(e._date + 'T00:00:00');
+      return `<div class="tl-item">
+        <div class="tl-date"><b>${d.getDate()}</b><span>${BULAN_S[d.getMonth()]}</span></div>
+        <div class="tl-body">
+          <h4>${e.judul}</h4>
+          <p><span>🕐 ${e.waktu}</span><span>📍 ${e.lokasi}</span><span>👤 ${e.pic}</span></p>
+        </div>
+        <span class="badge badge-${catColor(e.kategori)}" style="align-self:center">${catName(e.kategori)}</span>
+      </div>`;
+    }).join('');
+  }
+
+  /* ---------- SURAT TERBARU ---------- */
+  document.getElementById('suratTerbaru').innerHTML = LETTER_REQUESTS.slice(0,5).map(s => `
+    <tr>
+      <td><a href="surat-detail.html?id=${s.id}" class="mono" style="color:var(--primary);font-weight:600">${s.id}</a></td>
+      <td>${s.jenisNama}</td>
+      <td><div class="row"><div class="avatar" style="width:28px;height:28px;font-size:11px">${initialsOf(s.pemohon)}</div><span class="text-sm">${s.pemohon.replace(/,.*/,'')}</span></div></td>
+      <td class="text-sm">${fmtDate(s.tanggalDibutuhkan)}</td>
+      <td>${statusBadge(s.status)}</td>
+      <td><a class="btn btn-ghost btn-sm" href="surat-detail.html?id=${s.id}">→</a></td>
+    </tr>`).join('');
+
+  /* ---------- STATISTIK SURAT ---------- */
+  const counts = {};
+  LETTER_REQUESTS.forEach(s => counts[s.status] = (counts[s.status]||0)+1);
+  document.getElementById('suratStat').innerHTML = Object.keys(STATUS_MAP).map(k => {
+    const c = counts[k] || 0;
+    const pct = Math.round((c / LETTER_REQUESTS.length) * 100);
+    return `<div style="margin-bottom:12px">
+      <div class="flex between center" style="font-size:12.5px;margin-bottom:5px">
+        <span>${STATUS_MAP[k].label}</span><b>${c}</b>
+      </div>
+      <div class="progress"><i style="width:${pct}%;background:var(--primary)"></i></div>
+    </div>`;
+  }).join('');
+
+  /* ---------- MINI CALENDAR ---------- */
+  renderMiniCal();
+
+  /* ---------- NOTIFIKASI ---------- */
+  document.getElementById('notifCount').textContent = NOTIFICATIONS.filter(n=>!n.read).length + ' Baru';
+  document.getElementById('notifList').innerHTML = NOTIFICATIONS.slice(0,4).map(n => `
+    <div class="tl-item">
+      <div style="width:34px;height:34px;border-radius:9px;background:var(--g100);display:grid;place-items:center;font-size:15px">
+        ${n.tipe==='surat'?'✉️':n.tipe==='kegiatan'?'📅':n.tipe==='approval'?'✅':'⏰'}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12.8px;font-weight:600;${n.read?'':'color:var(--primary)'}">${n.judul}</div>
+        <div class="muted" style="font-size:11.5px">${n.pesan}</div>
+      </div>
+    </div>`).join('');
+});
+
+function renderMiniCal(){
+  const el = document.getElementById('miniCal');
+  const year=2026, month=9;
+  const events = expandEvents(year, month);
+  const startDow = new Date(year, month, 1).getDay();
+  const days = new Date(year, month+1, 0).getDate();
+  let html = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--g200)">
+    ${['S','S','R','K','J','S','M'].map(d=>`<div style="background:var(--g50);text-align:center;padding:6px;font-size:10.5px;font-weight:700;color:var(--g500)">${d}</div>`).join('')}`;
+  for (let i=0;i<startDow;i++) html += `<div style="background:var(--g50);padding:8px;text-align:center;color:var(--g300);font-size:11.5px"></div>`;
+  for (let d=1;d<=days;d++){
+    const iso = `2026-10-${String(d).padStart(2,'0')}`;
+    const has = events.some(e=>e._date===iso);
+    const isToday = d===14;
+    html += `<div style="background:${isToday?'var(--primary)':'#fff'};padding:8px 4px;text-align:center;position:relative">
+      <span style="font-size:11.5px;font-weight:${isToday?'700':'600'};color:${isToday?'#fff':'var(--g700)'}">${d}</span>
+      ${has?`<div style="width:5px;height:5px;border-radius:50%;background:${isToday?'#fff':'var(--primary)'};margin:2px auto 0"></div>`:''}
+    </div>`;
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+</script>
+</body>
+</html>

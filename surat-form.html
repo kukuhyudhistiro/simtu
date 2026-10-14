@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buat Permohonan Surat · SIMTU</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="surat" data-title="Buat Permohonan Surat" data-crumb="Ajukan permohonan surat ke Tata Usaha">
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+
+    <main class="content" style="max-width:1000px">
+      <div class="flex between center mb-4">
+        <a class="btn btn-ghost btn-sm" href="surat.html">← Kembali ke Daftar Surat</a>
+        <span class="badge badge-info">Form Permohonan</span>
+      </div>
+
+      <div class="alert alert-info">
+        ℹ️ <div>Permohonan surat minimal <b>H-3 hari kerja</b> sebelum tanggal dibutuhkan. Permohonan kurang dari H-3 memerlukan <b>approval khusus Kepala Sekolah</b>.</div>
+      </div>
+
+      <form onsubmit="submitForm(event)">
+        <div class="card mb-4">
+          <div class="card-h"><h3>📄 Detail Permohonan</h3></div>
+          <div class="card-b">
+            <div class="form-grid">
+              <div class="field full">
+                <label>Jenis Surat <span class="req">*</span></label>
+                <select class="select" id="jenis" required onchange="updateInfo()"></select>
+                <span class="hint" id="jenisInfo"></span>
+              </div>
+
+              <div class="field full">
+                <label>Keperluan Surat <span class="req">*</span></label>
+                <input class="input" id="keperluan" placeholder="Contoh: Undangan rapat koordinasi wali murid kelas XII" required>
+              </div>
+
+              <div class="field">
+                <label>Tujuan Surat <span class="req">*</span></label>
+                <input class="input" id="tujuan" placeholder="Contoh: Wali Murid Kelas XII" required>
+              </div>
+
+              <div class="field">
+                <label>Unit Pemohon <span class="req">*</span></label>
+                <select class="select" id="unit" required></select>
+              </div>
+
+              <div class="field">
+                <label>Tanggal Dibutuhkan <span class="req">*</span></label>
+                <input class="input" type="date" id="tanggal" value="2026-10-20" required onchange="checkLead()">
+                <span class="hint" id="leadInfo"></span>
+              </div>
+
+              <div class="field">
+                <label>Prioritas</label>
+                <select class="select" id="prioritas">
+                  <option value="normal">Normal</option>
+                  <option value="urgent">Urgent</option>
+                  <option value="sangat_urgent">Sangat Urgent</option>
+                </select>
+              </div>
+
+              <div class="field full">
+                <label>Keterangan Tambahan</label>
+                <textarea class="textarea" id="keterangan" placeholder="Detail isi surat, jumlah tembusan, atau catatan khusus untuk TU..."></textarea>
+              </div>
+
+              <div class="field full">
+                <label>Lampiran Pendukung</label>
+                <div style="border:2px dashed var(--g300);border-radius:10px;padding:24px;text-align:center;background:var(--g50);cursor:pointer"
+                     onclick="alert('Simulasi: pilih file untuk diunggah')">
+                  <div style="font-size:32px;margin-bottom:8px">📎</div>
+                  <div style="font-weight:600;color:var(--g700)">Klik untuk unggah file</div>
+                  <div class="hint">PDF, DOCX, XLSX · Maks 5MB</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-h"><h3>👤 Data Pemohon</h3></div>
+          <div class="card-b">
+            <div class="info-list" id="pemohonInfo"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-b flex between center" style="flex-wrap:wrap;gap:12px">
+            <div class="muted text-sm">Pastikan data sudah benar sebelum dikirim ke TU.</div>
+            <div class="flex gap-2">
+              <a class="btn btn-outline" href="surat.html">Batal</a>
+              <button type="button" class="btn btn-outline" onclick="alert('Draft disimpan (simulasi).')">Simpan Draft</button>
+              <button type="submit" class="btn btn-primary">Kirim Permohonan ke TU</button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </main>
+  </div>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const u = getCurrentUser();
+  if (!u) return;
+
+  document.getElementById('jenis').innerHTML = LETTER_TYPES.map(t =>
+    `<option value="${t.id}">${t.nama} (${t.kode})</option>`).join('');
+  document.getElementById('unit').innerHTML = UNITS.map(x => `<option value="${x.id}">${x.nama}</option>`).join('');
+  document.getElementById('unit').value = u.unit || 'U-TU';
+
+  document.getElementById('pemohonInfo').innerHTML = `
+    <dt>Nama</dt><dd>${u.nama}</dd>
+    <dt>Jabatan</dt><dd>${u.jabatan}</dd>
+    <dt>Unit</dt><dd>${unitName(u.unit)}</dd>
+    <dt>Email</dt><dd>${u.email}</dd>
+    <dt>No. HP</dt><dd>${u.hp}</dd>`;
+
+  updateInfo();
+  checkLead();
+});
+
+function updateInfo(){
+  const t = LETTER_TYPES.find(x => x.id === document.getElementById('jenis').value);
+  if (!t) return;
+  const approverMap = { tu:'Kepala TU', wakasek:'Wakasek terkait', kepsek:'Kepala Sekolah' };
+  document.getElementById('jenisInfo').textContent =
+    `Lead time minimal ${t.leadTime} hari kerja · Approver: ${approverMap[t.butuhApproval]}`;
+}
+
+function checkLead(){
+  const tgl = document.getElementById('tanggal').value;
+  const t = LETTER_TYPES.find(x => x.id === document.getElementById('jenis').value);
+  const info = document.getElementById('leadInfo');
+  if (!tgl || !t) return;
+  const diff = Math.floor((new Date(tgl) - new Date('2026-10-14')) / 86400000);
+  if (diff < t.leadTime){
+    info.innerHTML = `<span style="color:var(--danger);font-weight:600">⚠️ Hanya ${diff} hari. Kurang dari lead time (${t.leadTime} hari) — perlu approval khusus.</span>`;
+  } else {
+    info.innerHTML = `<span style="color:var(--success);font-weight:600">✓ Lead time terpenuhi (${diff} hari).</span>`;
+  }
+}
+
+function submitForm(e){
+  e.preventDefault();
+  const jenis = LETTER_TYPES.find(x => x.id === document.getElementById('jenis').value);
+  openModal('Konfirmasi Pengiriman',
+    `<div class="alert alert-success">✓ Permohonan siap dikirim ke Tata Usaha.</div>
+     <div class="info-list mt-4">
+       <dt>Jenis Surat</dt><dd>${jenis.nama}</dd>
+       <dt>Keperluan</dt><dd>${document.getElementById('keperluan').value}</dd>
+       <dt>Tujuan</dt><dd>${document.getElementById('tujuan').value}</dd>
+       <dt>Dibutuhkan</dt><dd>${fmtDate(document.getElementById('tanggal').value, true)}</dd>
+       <dt>Prioritas</dt><dd>${document.getElementById('prioritas').value}</dd>
+     </div>
+     <div class="alert alert-info mt-4">ℹ️ Anda akan menerima notifikasi saat status permohonan berubah.</div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Periksa Lagi</button>
+     <button class="btn btn-primary" onclick="closeModal();alert('Permohonan berhasil dikirim ke TU (simulasi).');location.href='surat.html'">Kirim Sekarang</button>`);
+}
+</script>
+</body>
+</html>

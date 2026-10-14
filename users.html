@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kelola User · SIMTU</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="users" data-title="Kelola User" data-crumb="Manajemen pengguna dan hak akses sistem">
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+
+    <main class="content">
+      <div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+        <div class="stat"><div class="ic blue">👥</div><div><div class="val" id="sUser">0</div><div class="lbl">Total User</div></div></div>
+        <div class="stat"><div class="ic green">✓</div><div><div class="val" id="sAktif">0</div><div class="lbl">Aktif</div></div></div>
+        <div class="stat"><div class="ic purple">🎭</div><div><div class="val">6</div><div class="lbl">Peran / Role</div></div></div>
+        <div class="stat"><div class="ic orange">🏢</div><div><div class="val">6</div><div class="lbl">Unit Kerja</div></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <h3>Daftar Pengguna</h3>
+          <div class="spacer"></div>
+          <button class="btn btn-primary btn-sm" onclick="addUser()">+ Tambah User</button>
+        </div>
+        <div class="filters">
+          <input class="input grow" id="fSearch" placeholder="🔍 Cari nama / username / email..." oninput="renderTable()">
+          <select class="select" id="fRole" onchange="renderTable()">
+            <option value="">Semua Role</option>
+            <option value="admin">Super Admin</option>
+            <option value="kepsek">Kepala Sekolah</option>
+            <option value="wakasek">Wakasek</option>
+            <option value="tu">Kepala TU</option>
+            <option value="staf_tu">Staf TU</option>
+            <option value="guru">Guru / Staf</option>
+          </select>
+          <select class="select" id="fUnit" onchange="renderTable()"><option value="">Semua Unit</option></select>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Pengguna</th><th>Username</th><th>Role</th><th>Unit</th><th>Kontak</th><th>Status</th><th>Aksi</th></tr>
+            </thead>
+            <tbody id="tblBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (!getCurrentUser()) return;
+  document.getElementById('fUnit').innerHTML = '<option value="">Semua Unit</option>' +
+    UNITS.map(u => `<option value="${u.id}">${u.nama}</option>`).join('');
+
+  document.getElementById('sUser').textContent = USERS.length;
+  document.getElementById('sAktif').textContent = USERS.filter(u => u.status === 'aktif').length;
+  renderTable();
+});
+
+function renderTable(){
+  const q = document.getElementById('fSearch').value.toLowerCase();
+  const fr = document.getElementById('fRole').value;
+  const fu = document.getElementById('fUnit').value;
+
+  const data = USERS.filter(u =>
+    (!q || u.nama.toLowerCase().includes(q) || u.username.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) &&
+    (!fr || u.role === fr) && (!fu || u.unit === fu));
+
+  document.getElementById('tblBody').innerHTML = data.map(u => `
+    <tr>
+      <td>
+        <div class="row">
+          <div class="avatar">${initialsOf(u.nama)}</div>
+          <div>
+            <div style="font-weight:600">${u.nama}</div>
+            <div class="muted" style="font-size:11.5px">${u.jabatan}</div>
+          </div>
+        </div>
+      </td>
+      <td class="text-sm"><span class="mono">${u.username}</span></td>
+      <td><span class="badge badge-primary">${u.roleLabel}</span></td>
+      <td class="text-sm">${unitName(u.unit)}</td>
+      <td class="text-sm">${u.email}<br><span class="muted">${u.hp}</span></td>
+      <td>${u.status === 'aktif' ? '<span class="badge badge-success">Aktif</span>' : '<span class="badge badge-gray">Nonaktif</span>'}</td>
+      <td>
+        <div class="acts">
+          <button class="btn btn-ghost btn-icon btn-sm" title="Edit" onclick="editUser('${u.id}')">✏️</button>
+          <button class="btn btn-ghost btn-icon btn-sm" title="Reset Password" onclick="alert('Reset password untuk ${u.nama} (simulasi).')">🔑</button>
+          <button class="btn btn-ghost btn-icon btn-sm" title="Hapus" onclick="delUser('${u.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function addUser(){
+  openModal('Tambah User Baru', `
+    <div class="form-grid">
+      <div class="field full"><label>Nama Lengkap <span class="req">*</span></label><input class="input" placeholder="Nama lengkap"></div>
+      <div class="field"><label>Username <span class="req">*</span></label><input class="input" placeholder="username"></div>
+      <div class="field"><label>Password <span class="req">*</span></label><input class="input" type="password" placeholder="••••••"></div>
+      <div class="field"><label>Email</label><input class="input" placeholder="email@sekolah.sch.id"></div>
+      <div class="field"><label>No. HP</label><input class="input" placeholder="0812-xxxx-xxxx"></div>
+      <div class="field"><label>Role <span class="req">*</span></label>
+        <select class="select">
+          <option>Super Admin</option><option>Kepala Sekolah</option><option>Wakasek</option>
+          <option>Kepala TU</option><option>Staf TU</option><option>Guru / Staf</option>
+        </select></div>
+      <div class="field"><label>Unit <span class="req">*</span></label>
+        <select class="select">${UNITS.map(u=>`<option>${u.nama}</option>`).join('')}</select></div>
+      <div class="field"><label>Jabatan</label><input class="input" placeholder="Jabatan"></div>
+      <div class="field"><label>Status</label><select class="select"><option>Aktif</option><option>Nonaktif</option></select></div>
+    </div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Batal</button>
+     <button class="btn btn-primary" onclick="closeModal();alert('User baru ditambahkan (simulasi).')">Simpan</button>`);
+}
+
+function editUser(id){
+  const u = USERS.find(x => x.id === id);
+  openModal('Edit User', `
+    <div class="alert alert-info">Mengedit data: <b>${u.nama}</b></div>
+    <div class="form-grid">
+      <div class="field full"><label>Nama Lengkap</label><input class="input" value="${u.nama}"></div>
+      <div class="field"><label>Username</label><input class="input" value="${u.username}"></div>
+      <div class="field"><label>Email</label><input class="input" value="${u.email}"></div>
+      <div class="field"><label>No. HP</label><input class="input" value="${u.hp}"></div>
+      <div class="field"><label>Role</label><input class="input" value="${u.roleLabel}" readonly></div>
+      <div class="field"><label>Unit</label><input class="input" value="${unitName(u.unit)}" readonly></div>
+      <div class="field"><label>Status</label>
+        <select class="select"><option ${u.status==='aktif'?'selected':''}>Aktif</option><option ${u.status!=='aktif'?'selected':''}>Nonaktif</option></select></div>
+    </div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Batal</button>
+     <button class="btn btn-primary" onclick="closeModal();alert('Data user diperbarui (simulasi).')">Simpan Perubahan</button>`);
+}
+
+function delUser(id){
+  const u = USERS.find(x => x.id === id);
+  openModal('Hapus User',
+    `<p>Yakin ingin menghapus user <b>${u.nama}</b>?</p>
+     <div class="alert alert-danger mt-4">⚠️ User tidak akan bisa mengakses sistem setelah dihapus.</div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Batal</button>
+     <button class="btn btn-danger" onclick="closeModal();alert('User dihapus (simulasi).')">Hapus</button>`);
+}
+</script>
+</body>
+</html>

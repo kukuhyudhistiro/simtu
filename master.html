@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Master Data · SIMTU</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="master" data-title="Master Data" data-crumb="Jenis surat, unit kerja, kategori kegiatan, dan template">
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+
+    <main class="content">
+      <div class="card mb-4">
+        <div class="tabs">
+          <button class="tab active" onclick="setTab(this,'jenis')">Jenis Surat</button>
+          <button class="tab" onclick="setTab(this,'unit')">Unit Kerja</button>
+          <button class="tab" onclick="setTab(this,'kategori')">Kategori Kegiatan</button>
+          <button class="tab" onclick="setTab(this,'template')">Template Surat</button>
+        </div>
+
+        <!-- JENIS SURAT -->
+        <div class="tab-panel" id="tab-jenis">
+          <div class="card-h">
+            <h3>Jenis Surat</h3>
+            <div class="spacer"></div>
+            <button class="btn btn-primary btn-sm" onclick="alert('Tambah jenis surat (simulasi)')">+ Tambah Jenis</button>
+          </div>
+          <div class="table-wrap">
+            <table class="tbl">
+              <thead><tr><th>Kode</th><th>Nama Jenis</th><th>Approver</th><th>Lead Time</th><th>Template</th><th>Aksi</th></tr></thead>
+              <tbody>
+                ${'' /* diisi JS */}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- UNIT -->
+        <div class="tab-panel" id="tab-unit" style="display:none">
+          <div class="card-h">
+            <h3>Unit Kerja</h3>
+            <div class="spacer"></div>
+            <button class="btn btn-primary btn-sm" onclick="alert('Tambah unit (simulasi)')">+ Tambah Unit</button>
+          </div>
+          <div class="table-wrap">
+            <table class="tbl">
+              <thead><tr><th>ID</th><th>Nama Unit</th><th>Jumlah Kegiatan</th><th>Aksi</th></tr></thead>
+              <tbody id="tblUnit"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- KATEGORI -->
+        <div class="tab-panel" id="tab-kategori" style="display:none">
+          <div class="card-h">
+            <h3>Kategori Kegiatan</h3>
+            <div class="spacer"></div>
+            <button class="btn btn-primary btn-sm" onclick="alert('Tambah kategori (simulasi)')">+ Tambah Kategori</button>
+          </div>
+          <div class="table-wrap">
+            <table class="tbl">
+              <thead><tr><th>ID</th><th>Nama Kategori</th><th>Warna</th><th>Jumlah Kegiatan</th><th>Aksi</th></tr></thead>
+              <tbody id="tblKategori"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TEMPLATE -->
+        <div class="tab-panel" id="tab-template" style="display:none">
+          <div class="card-h">
+            <h3>Template Surat</h3>
+            <div class="spacer"></div>
+            <button class="btn btn-primary btn-sm" onclick="alert('Tambah template (simulasi)')">+ Tambah Template</button>
+          </div>
+          <div class="table-wrap">
+            <table class="tbl">
+              <thead><tr><th>Template</th><th>Jenis Surat</th><th>Variabel</th><th>Status</th><th>Aksi</th></tr></thead>
+              <tbody id="tblTemplate"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><h3>📐 Format Nomor Surat</h3></div>
+        <div class="card-b">
+          <div class="alert alert-info">ℹ️ Nomor surat dibuat otomatis oleh sistem saat surat diproses.</div>
+          <div class="flex gap-3 center" style="flex-wrap:wrap">
+            <div class="mono" style="font-size:16px;padding:12px 20px">{URUT}/{KODE_UNIT}/{ROMawi_BULAN}/{TAHUN}</div>
+            <span class="muted">Contoh:</span>
+            <span class="mono" style="font-size:15px;padding:10px 16px;background:var(--primary-light);color:var(--primary-dark);font-weight:700">041/TU/X/2026</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (!getCurrentUser()) return;
+
+  document.querySelector('#tab-jenis tbody').innerHTML = LETTER_TYPES.map(t => `
+    <tr>
+      <td><span class="mono">${t.kode}</span></td>
+      <td style="font-weight:600">${t.nama}</td>
+      <td class="text-sm">${t.butuhApproval === 'kepsek' ? 'Kepala Sekolah' : t.butuhApproval === 'wakasek' ? 'Wakasek' : 'Kepala TU'}</td>
+      <td><span class="badge badge-info">${t.leadTime} hari kerja</span></td>
+      <td class="text-sm"><span class="mono">${t.template}</span></td>
+      <td>
+        <div class="acts">
+          <button class="btn btn-ghost btn-icon btn-sm" onclick="alert('Edit jenis surat (simulasi)')">✏️</button>
+          <button class="btn btn-ghost btn-icon btn-sm" onclick="alert('Hapus jenis surat (simulasi)')">🗑️</button>
+        </div>
+      </td>
+    </tr>`).join('');
+
+  document.getElementById('tblUnit').innerHTML = UNITS.map(u => `
+    <tr>
+      <td><span class="mono">${u.id}</span></td>
+      <td style="font-weight:600">${u.nama}</td>
+      <td class="text-sm">${EVENTS.filter(e=>e.unit===u.id).length} kegiatan</td>
+      <td><div class="acts">
+        <button class="btn btn-ghost btn-icon btn-sm" onclick="alert('Edit unit (simulasi)')">✏️</button>
+        <button class="btn btn-ghost btn-icon btn-sm" onclick="alert('Hapus unit (simulasi)')">🗑️</button>
+      </div></td>
+    </tr>`).join('');
+
+  document.getElementById('tblKategori').innerHTML = CATEGORIES.map(c => `
+    <tr>
+      <td><span class="mono">${c.id}</span></td>
+      <td style="font-weight:600">${c.nama}</td>
+      <td><span class="badge badge-${c.warna}">${c.warna}</span></td>
+      <td class="text-sm">${EVENTS.filter(e=>e.kategori===c.id).length} kegiatan</td>
+      <td><div class="acts">
+        <button class="btn btn-ghost btn-icon btn-sm" onclick="alert('Edit kategori (simulasi)')">✏️</button>
+        <button class="btn btn-ghost btn-icon btn-sm" onclick="alert('Hapus kategori (simulasi)')">🗑️</button>
+      </div></td>
+    </tr>`).join('');
+
+  document.getElementById('tblTemplate').innerHTML = LETTER_TYPES.map(t => `
+    <tr>
+      <td style="font-weight:600">${t.template}</td>
+      <td class="text-sm">${t.nama}</td>
+      <td class="text-sm"><span class="mono">{nama_tujuan}, {tanggal}, {keperluan}</span></td>
+      <td><span class="badge badge-success">Aktif</span></td>
+      <td><div class="acts">
+        <button class="btn btn-ghost btn-icon btn-sm" onclick="alert('Lihat template (simulasi)')">👁️</button>
+        <button class="btn btn-ghost btn-icon btn-sm" onclick="alert('Edit template (simulasi)')">✏️</button>
+      </div></td>
+    </tr>`).join('');
+});
+
+function setTab(btn, id){
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  ['jenis','unit','kategori','template'].forEach(k => {
+    document.getElementById('tab-' + k).style.display = k === id ? 'block' : 'none';
+  });
+}
+</script>
+</body>
+</html>

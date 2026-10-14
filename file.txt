@@ -1,0 +1,20 @@
+tu-app/
+├── index.html              ← Login
+├── dashboard.html
+├── kalender.html
+├── kegiatan.html
+├── kegiatan-form.html
+├── surat.html
+├── surat-form.html
+├── surat-detail.html
+├── approval.html
+├── arsip.html
+├── laporan.html
+├── users.html
+├── master.html
+└── assets/
+    ├── css/
+    │   └── style.css
+    └── js/
+        ├── data.js
+        └── app.js

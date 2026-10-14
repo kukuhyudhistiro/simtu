@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Permohonan Surat · SIMTU</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="surat" data-title="Permohonan Surat" data-crumb="Pengajuan, tracking, dan pemrosesan surat">
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+
+    <main class="content">
+      <div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+        <div class="stat"><div class="ic blue">✉️</div><div><div class="val" id="sTotal">0</div><div class="lbl">Total Permohonan</div></div></div>
+        <div class="stat"><div class="ic orange">⏳</div><div><div class="val" id="sProses">0</div><div class="lbl">Sedang Diproses</div></div></div>
+        <div class="stat"><div class="ic green">✅</div><div><div class="val" id="sSelesai">0</div><div class="lbl">Selesai</div></div></div>
+        <div class="stat"><div class="ic red">⚠️</div><div><div class="val" id="sMendadak">0</div><div class="lbl">Mendadak</div></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <h3>Daftar Permohonan Surat</h3>
+          <div class="spacer"></div>
+          <a class="btn btn-primary btn-sm" href="surat-form.html">+ Buat Permohonan</a>
+        </div>
+
+        <div class="filters">
+          <input class="input grow" id="fSearch" placeholder="🔍 Cari nomor / keperluan / pemohon..." oninput="renderTable()">
+          <select class="select" id="fJenis" onchange="renderTable()"><option value="">Semua Jenis</option></select>
+          <select class="select" id="fStatus" onchange="renderTable()">
+            <option value="">Semua Status</option>
+            <option value="diajukan">Diajukan</option>
+            <option value="verifikasi">Verifikasi TU</option>
+            <option value="menunggu_approval">Menunggu Approval</option>
+            <option value="diproses">Diproses</option>
+            <option value="selesai">Selesai</option>
+            <option value="ditolak">Ditolak</option>
+          </select>
+          <select class="select" id="fPrioritas" onchange="renderTable()">
+            <option value="">Semua Prioritas</option>
+            <option value="normal">Normal</option>
+            <option value="urgent">Urgent</option>
+            <option value="sangat_urgent">Sangat Urgent</option>
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="resetFilter()">Reset</button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>No. Permohonan</th><th>Jenis Surat</th><th>Keperluan</th>
+                <th>Pemohon</th><th>Diajukan</th><th>Dibutuhkan</th>
+                <th>Prioritas</th><th>Status</th><th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tblBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (!getCurrentUser()) return;
+  document.getElementById('fJenis').innerHTML = '<option value="">Semua Jenis</option>' +
+    LETTER_TYPES.map(t => `<option value="${t.id}">${t.nama}</option>`).join('');
+
+  document.getElementById('sTotal').textContent = LETTER_REQUESTS.length;
+  document.getElementById('sProses').textContent = LETTER_REQUESTS.filter(s => ['verifikasi','menunggu_approval','diproses'].includes(s.status)).length;
+  document.getElementById('sSelesai').textContent = LETTER_REQUESTS.filter(s => s.status === 'selesai').length;
+  document.getElementById('sMendadak').textContent = LETTER_REQUESTS.filter(s => s.prioritas !== 'normal').length;
+
+  renderTable();
+});
+
+function renderTable(){
+  const q = document.getElementById('fSearch').value.toLowerCase();
+  const fj = document.getElementById('fJenis').value;
+  const fs = document.getElementById('fStatus').value;
+  const fp = document.getElementById('fPrioritas').value;
+
+  const data = LETTER_REQUESTS.filter(s =>
+    (!q || s.id.toLowerCase().includes(q) || s.keperluan.toLowerCase().includes(q) || s.pemohon.toLowerCase().includes(q)) &&
+    (!fj || s.jenis === fj) && (!fs || s.status === fs) && (!fp || s.prioritas === fp)
+  );
+
+  const body = document.getElementById('tblBody');
+  if (data.length === 0){
+    body.innerHTML = `<tr><td colspan="9"><div class="empty"><div class="ic">✉️</div><h4>Tidak ada permohonan surat</h4><p>Coba ubah filter atau buat permohonan baru.</p></div></td></tr>`;
+    return;
+  }
+
+  body.innerHTML = data.map(s => `
+    <tr>
+      <td>
+        <a href="surat-detail.html?id=${s.id}" class="mono" style="color:var(--primary);font-weight:600">${s.id}</a>
+      </td>
+      <td class="text-sm">${s.jenisNama}</td>
+      <td>
+        <div style="font-weight:600;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.keperluan}</div>
+        <div class="muted" style="font-size:11.5px">${unitName(s.unit)}</div>
+      </td>
+      <td>
+        <div class="row">
+          <div class="avatar" style="width:28px;height:28px;font-size:11px">${initialsOf(s.pemohon)}</div>
+          <span class="text-sm">${s.pemohon.replace(/,.*/,'')}</span>
+        </div>
+      </td>
+      <td class="text-sm">${fmtDate(s.tanggalPengajuan)}</td>
+      <td class="text-sm">${fmtDate(s.tanggalDibutuhkan)}</td>
+      <td>${priorityBadge(s.prioritas)}</td>
+      <td>${statusBadge(s.status)}</td>
+      <td><a class="btn btn-ghost btn-sm" href="surat-detail.html?id=${s.id}">Detail →</a></td>
+    </tr>`).join('');
+}
+
+function resetFilter(){
+  ['fSearch','fJenis','fStatus','fPrioritas'].forEach(id => document.getElementById(id).value = '');
+  renderTable();
+}
+</script>
+</body>
+</html>

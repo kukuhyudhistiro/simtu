@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Kegiatan · SIMTU</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="kegiatan" data-title="Data Kegiatan" data-crumb="Kelola seluruh kegiatan sekolah">
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+
+    <main class="content">
+      <div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+        <div class="stat"><div class="ic blue">📋</div><div><div class="val" id="sTotal">0</div><div class="lbl">Total Kegiatan</div></div></div>
+        <div class="stat"><div class="ic green">✅</div><div><div class="val" id="sTerjadwal">0</div><div class="lbl">Terjadwal</div></div></div>
+        <div class="stat"><div class="ic orange">🔁</div><div><div class="val" id="sRutin">0</div><div class="lbl">Kegiatan Rutin</div></div></div>
+        <div class="stat"><div class="ic purple">🏢</div><div><div class="val" id="sUnit">0</div><div class="lbl">Unit Terlibat</div></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <h3>Daftar Kegiatan</h3>
+          <div class="spacer"></div>
+          <a class="btn btn-primary btn-sm" href="kegiatan-form.html">+ Tambah Kegiatan</a>
+        </div>
+
+        <div class="filters">
+          <input class="input grow" id="fSearch" placeholder="🔍 Cari nama kegiatan..." oninput="renderTable()">
+          <select class="select" id="fKategori" onchange="renderTable()">
+            <option value="">Semua Kategori</option>
+            ${'' /* diisi JS */}
+          </select>
+          <select class="select" id="fUnit" onchange="renderTable()">
+            <option value="">Semua Unit</option>
+          </select>
+          <select class="select" id="fVis" onchange="renderTable()">
+            <option value="">Semua Visibilitas</option>
+            <option value="publik">Publik Sekolah</option>
+            <option value="internal">Internal</option>
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="resetFilter()">Reset</button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>ID</th><th>Nama Kegiatan</th><th>Kategori</th><th>Unit</th>
+                <th>Tanggal</th><th>Waktu</th><th>PJ</th><th>Status</th><th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tblBody"></tbody>
+          </table>
+        </div>
+        <div id="pagination"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (!getCurrentUser()) return;
+
+  document.getElementById('fKategori').innerHTML = '<option value="">Semua Kategori</option>' +
+    CATEGORIES.map(c => `<option value="${c.id}">${c.nama}</option>`).join('');
+  document.getElementById('fUnit').innerHTML = '<option value="">Semua Unit</option>' +
+    UNITS.map(u => `<option value="${u.id}">${u.nama}</option>`).join('');
+
+  document.getElementById('sTotal').textContent = EVENTS.length;
+  document.getElementById('sTerjadwal').textContent = EVENTS.length;
+  document.getElementById('sRutin').textContent = EVENTS.filter(e => e.recurring).length;
+  document.getElementById('sUnit').textContent = new Set(EVENTS.map(e => e.unit)).size;
+
+  renderTable();
+});
+
+function renderTable(){
+  const q = document.getElementById('fSearch').value.toLowerCase();
+  const fk = document.getElementById('fKategori').value;
+  const fu = document.getElementById('fUnit').value;
+  const fv = document.getElementById('fVis').value;
+
+  const data = EVENTS.filter(e =>
+    (!q || e.judul.toLowerCase().includes(q) || e.pic.toLowerCase().includes(q)) &&
+    (!fk || e.kategori === fk) &&
+    (!fu || e.unit === fu) &&
+    (!fv || e.visibility === fv)
+  ).sort((a,b) => a.mulai.localeCompare(b.mulai));
+
+  const body = document.getElementById('tblBody');
+  if (data.length === 0){
+    body.innerHTML = `<tr><td colspan="9"><div class="empty"><div class="ic">🗂️</div><h4>Tidak ada kegiatan</h4><p>Coba ubah filter atau tambah kegiatan baru.</p></div></td></tr>`;
+    return;
+  }
+
+  body.innerHTML = data.map(e => `
+    <tr>
+      <td><span class="mono">${e.id}</span></td>
+      <td>
+        <div style="font-weight:600;color:var(--g800)">${e.judul}</div>
+        ${e.recurring ? `<div class="muted" style="font-size:11px">🔁 ${e.recurring==='harian'?'Rutin harian':'Rutin mingguan'}</div>` : ''}
+      </td>
+      <td><span class="badge badge-${catColor(e.kategori)}">${catName(e.kategori)}</span></td>
+      <td class="text-sm">${unitName(e.unit)}</td>
+      <td class="text-sm" style="white-space:nowrap">${fmtDate(e.mulai)}${e.selesai !== e.mulai ? '<br><span class="muted">s/d ' + fmtDate(e.selesai) + '</span>' : ''}</td>
+      <td class="text-sm">${e.waktu}</td>
+      <td class="text-sm">${e.pic}</td>
+      <td><span class="badge badge-success">Terjadwal</span></td>
+      <td>
+        <div class="acts">
+          <button class="btn btn-ghost btn-icon btn-sm" title="Lihat" onclick="showEventDetail('${e.id}')">👁️</button>
+          <a class="btn btn-ghost btn-icon btn-sm" title="Edit" href="kegiatan-form.html?id=${e.id}">✏️</a>
+          <button class="btn btn-ghost btn-icon btn-sm" title="Hapus" onclick="delEvent('${e.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`).join('');
+
+  document.getElementById('pagination').innerHTML = `
+    <div class="flex between center" style="padding:14px 20px;border-top:1px solid var(--g200);font-size:12.5px;color:var(--g500)">
+      <span>Menampilkan ${data.length} dari ${EVENTS.length} kegiatan</span>
+      <div class="flex gap-2">
+        <button class="btn btn-outline btn-sm" disabled>‹ Sebelumnya</button>
+        <button class="btn btn-primary btn-sm">1</button>
+        <button class="btn btn-outline btn-sm" disabled>Berikutnya ›</button>
+      </div>
+    </div>`;
+}
+
+function resetFilter(){
+  document.getElementById('fSearch').value = '';
+  document.getElementById('fKategori').value = '';
+  document.getElementById('fUnit').value = '';
+  document.getElementById('fVis').value = '';
+  renderTable();
+}
+
+function delEvent(id){
+  openModal('Hapus Kegiatan',
+    `<p>Yakin ingin menghapus kegiatan <b>${id}</b>? Tindakan ini tidak dapat dibatalkan.</p>
+     <div class="alert alert-warning mt-4">⚠️ Semua notifikasi terkait kegiatan ini akan dibatalkan.</div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Batal</button>
+     <button class="btn btn-danger" onclick="closeModal();alert('Kegiatan ${id} dihapus (simulasi).')">Hapus</button>`);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Approval Surat · SIMTU</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="approval" data-title="Approval Surat" data-crumb="Setujui atau tolak permohonan surat">
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+
+    <main class="content">
+      <div class="alert alert-warning">
+        ⚠️ <div>Terdapat <b id="pendingCount">0</b> permohonan yang menunggu approval Anda. Segera tindak lanjuti agar proses surat tidak terhambat.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <h3>🕐 Menunggu Approval</h3>
+          <span class="sub">Permohonan yang membutuhkan persetujuan</span>
+          <div class="spacer"></div>
+          <span class="badge badge-purple" id="badgePending">0</span>
+        </div>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>No. Permohonan</th><th>Jenis</th><th>Keperluan</th>
+                <th>Pemohon</th><th>Dibutuhkan</th><th>Prioritas</th><th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tblPending"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="sec-title">📜 Riwayat Approval</div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>No. Permohonan</th><th>Jenis</th><th>Keperluan</th><th>Diputuskan</th><th>Status</th></tr>
+            </thead>
+            <tbody id="tblRiwayat"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (!getCurrentUser()) return;
+
+  const pending = LETTER_REQUESTS.filter(s => s.status === 'menunggu_approval');
+  document.getElementById('pendingCount').textContent = pending.length;
+  document.getElementById('badgePending').textContent = pending.length + ' menunggu';
+
+  const body = document.getElementById('tblPending');
+  if (pending.length === 0){
+    body.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="ic">🎉</div><h4>Tidak ada approval tertunda</h4><p>Semua permohonan sudah ditindaklanjuti.</p></div></td></tr>`;
+  } else {
+    body.innerHTML = pending.map(s => `
+      <tr>
+        <td><a href="surat-detail.html?id=${s.id}" class="mono" style="color:var(--primary);font-weight:600">${s.id}</a></td>
+        <td class="text-sm">${s.jenisNama}</td>
+        <td><div style="font-weight:600;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.keperluan}</div></td>
+        <td class="text-sm">${s.pemohon.replace(/,.*/,'')}</td>
+        <td class="text-sm">${fmtDate(s.tanggalDibutuhkan)}</td>
+        <td>${priorityBadge(s.prioritas)}</td>
+        <td>
+          <div class="acts">
+            <button class="btn btn-success btn-sm" onclick="quickAction('${s.id}','approve')">✓ Setujui</button>
+            <button class="btn btn-outline btn-sm" onclick="quickAction('${s.id}','reject')">Tolak</button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  const riwayat = LETTER_REQUESTS.filter(s => !['diajukan','verifikasi','menunggu_approval'].includes(s.status));
+  document.getElementById('tblRiwayat').innerHTML = riwayat.map(s => `
+    <tr>
+      <td><a href="surat-detail.html?id=${s.id}" class="mono" style="color:var(--primary);font-weight:600">${s.id}</a></td>
+      <td class="text-sm">${s.jenisNama}</td>
+      <td class="text-sm">${s.keperluan}</td>
+      <td class="text-sm">${s.approvedAt || '-'}</td>
+      <td>${statusBadge(s.status)}</td>
+    </tr>`).join('') || `<tr><td colspan="5"><div class="empty"><div class="ic">📭</div><h4>Belum ada riwayat</h4></div></td></tr>`;
+});
+
+function quickAction(id, action){
+  const s = LETTER_REQUESTS.find(x => x.id === id);
+  if (action === 'approve'){
+    openModal('Setujui Permohonan',
+      `<div class="alert alert-success">✓ Permohonan <b>${id}</b> akan disetujui.</div>
+       <dl class="info-list mt-4">
+         <dt>Jenis</dt><dd>${s.jenisNama}</dd>
+         <dt>Keperluan</dt><dd>${s.keperluan}</dd>
+         <dt>Pemohon</dt><dd>${s.pemohon}</dd>
+       </dl>
+       <div class="field mt-4"><label>Catatan Approval</label><textarea class="textarea" placeholder="Catatan untuk TU..."></textarea></div>`,
+      `<button class="btn btn-outline" onclick="closeModal()">Batal</button>
+       <button class="btn btn-success" onclick="closeModal();alert('Permohonan ${id} disetujui (simulasi).')">✓ Setujui</button>`);
+  } else {
+    openModal('Tolak Permohonan',
+      `<div class="alert alert-danger">Permohonan <b>${id}</b> akan ditolak.</div>
+       <div class="field mt-4"><label>Alasan Penolakan <span class="req">*</span></label><textarea class="textarea" placeholder="Jelaskan alasan penolakan..." required></textarea></div>`,
+      `<button class="btn btn-outline" onclick="closeModal()">Batal</button>
+       <button class="btn btn-danger" onclick="closeModal();alert('Permohonan ${id} ditolak (simulasi).')">Tolak</button>`);
+  }
+}
+</script>
+</body>
+</html>

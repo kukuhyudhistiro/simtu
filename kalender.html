@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kalender Kegiatan · SIMTU</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="kalender" data-title="Kalender Kegiatan" data-crumb="Agenda harian, mingguan, bulanan, tahunan sekolah">
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+
+    <main class="content">
+      <div class="flex between center mb-4" style="flex-wrap:wrap;gap:12px">
+        <div class="chips">
+          <button class="chip active" onclick="setView(this,'bulan')">Bulanan</button>
+          <button class="chip" onclick="setView(this,'minggu')">Mingguan</button>
+          <button class="chip" onclick="setView(this,'hari')">Harian</button>
+          <button class="chip" onclick="setView(this,'tahun')">Tahunan</button>
+        </div>
+        <a class="btn btn-primary" href="kegiatan-form.html">+ Tambah Kegiatan</a>
+      </div>
+
+      <div class="card">
+        <div class="cal-head">
+          <div class="cal-nav">
+            <button onclick="navCal(-1)">‹</button>
+            <button onclick="navCal(1)">›</button>
+          </div>
+          <h3 id="calTitle">Oktober 2026</h3>
+          <button class="btn btn-outline btn-sm" onclick="goToday()">Hari Ini</button>
+          <div class="cal-legend">
+            <span><i style="background:#dc2626"></i>Upacara</span>
+            <span><i style="background:#0891b2"></i>Rapat</span>
+            <span><i style="background:#f59e0b"></i>Ujian</span>
+            <span><i style="background:#7c3aed"></i>Lomba/Siswa</span>
+            <span><i style="background:#16a34a"></i>Studi Tour</span>
+          </div>
+        </div>
+        <div id="calendar"></div>
+      </div>
+
+      <div class="sec-title">📋 Daftar Kegiatan Bulan Ini</div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Tanggal</th><th>Kegiatan</th><th>Kategori</th><th>Unit</th><th>Waktu</th><th>Lokasi</th><th>PJ</th><th>Status</th></tr>
+            </thead>
+            <tbody id="kegiatanBulanIni"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+let curYear = 2026, curMonth = 9;
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!getCurrentUser()) return;
+  renderAll();
+});
+
+function renderAll(){
+  document.getElementById('calTitle').textContent = `${BULAN[curMonth]} ${curYear}`;
+  renderCalendar('calendar', curYear, curMonth);
+
+  const list = expandEvents(curYear, curMonth)
+    .sort((a,b) => a._date.localeCompare(b._date) || a.waktu.localeCompare(b.waktu));
+
+  document.getElementById('kegiatanBulanIni').innerHTML = list.map(e => `
+    <tr>
+      <td class="text-sm" style="white-space:nowrap">${fmtDate(e._date)}</td>
+      <td>
+        <div style="font-weight:600">${e.judul}</div>
+        ${e.recurring ? `<div class="muted" style="font-size:11px">🔁 ${e.recurring==='harian'?'Rutin harian':'Rutin mingguan'}</div>` : ''}
+      </td>
+      <td><span class="badge badge-${catColor(e.kategori)}">${catName(e.kategori)}</span></td>
+      <td class="text-sm">${unitName(e.unit)}</td>
+      <td class="text-sm">${e.waktu}</td>
+      <td class="text-sm">${e.lokasi}</td>
+      <td class="text-sm">${e.pic}</td>
+      <td><span class="badge badge-success">Terjadwal</span></td>
+    </tr>`).join('');
+}
+
+function navCal(dir){
+  curMonth += dir;
+  if (curMonth > 11){ curMonth = 0; curYear++; }
+  if (curMonth < 0){ curMonth = 11; curYear--; }
+  renderAll();
+}
+function goToday(){ curYear = 2026; curMonth = 9; renderAll(); }
+function setView(btn, v){
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  if (v !== 'bulan') alert('Tampilan "' + v + '" disiapkan sebagai pengembangan lanjutan. Prototype ini fokus pada tampilan bulanan.');
+}
+</script>
+</body>
+</html>

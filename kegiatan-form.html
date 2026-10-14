@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tambah Kegiatan · SIMTU</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="kegiatan" data-title="Form Kegiatan" data-crumb="Tambah / edit kegiatan sekolah">
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+
+    <main class="content" style="max-width:1000px">
+      <div class="flex between center mb-4">
+        <div class="row">
+          <a class="btn btn-ghost btn-sm" href="kegiatan.html">← Kembali</a>
+          <span class="muted text-sm" id="formMode">Form Tambah Kegiatan</span>
+        </div>
+        <span class="badge badge-info">Draft</span>
+      </div>
+
+      <div class="alert alert-info">
+        ℹ️ <div>Kegiatan wajib diinput minimal <b>H-7</b> sebelum pelaksanaan. Kegiatan yang diinput kurang dari H-7 akan ditandai dan memerlukan verifikasi TU.</div>
+      </div>
+
+      <form onsubmit="submitForm(event)">
+        <div class="card mb-4">
+          <div class="card-h"><h3>📝 Informasi Kegiatan</h3></div>
+          <div class="card-b">
+            <div class="form-grid">
+              <div class="field full">
+                <label>Nama Kegiatan <span class="req">*</span></label>
+                <input class="input" id="judul" placeholder="Contoh: Rapat Koordinasi Wali Murid" required>
+              </div>
+
+              <div class="field">
+                <label>Kategori <span class="req">*</span></label>
+                <select class="select" id="kategori" required></select>
+              </div>
+
+              <div class="field">
+                <label>Unit Penyelenggara <span class="req">*</span></label>
+                <select class="select" id="unit" required></select>
+              </div>
+
+              <div class="field">
+                <label>Tanggal Mulai <span class="req">*</span></label>
+                <input class="input" type="date" id="mulai" value="2026-10-20" required onchange="checkLeadTime()">
+                <span class="hint" id="leadInfo">Lead time minimal H-7 dari hari ini (14 Okt 2026).</span>
+              </div>
+
+              <div class="field">
+                <label>Tanggal Selesai <span class="req">*</span></label>
+                <input class="input" type="date" id="selesai" value="2026-10-20" required>
+              </div>
+
+              <div class="field">
+                <label>Waktu Pelaksanaan <span class="req">*</span></label>
+                <input class="input" id="waktu" placeholder="08:00 - 12:00" value="08:00 - 12:00" required>
+              </div>
+
+              <div class="field">
+                <label>Lokasi <span class="req">*</span></label>
+                <input class="input" id="lokasi" placeholder="Aula Sekolah" value="Aula Sekolah" required>
+              </div>
+
+              <div class="field">
+                <label>Penanggung Jawab <span class="req">*</span></label>
+                <input class="input" id="pic" placeholder="Nama penanggung jawab" value="Ahmad Fauzi, S.Pd" required>
+              </div>
+
+              <div class="field">
+                <label>Visibilitas</label>
+                <select class="select" id="visibility">
+                  <option value="publik">Publik Sekolah (semua guru & staf)</option>
+                  <option value="internal">Internal TU</option>
+                </select>
+              </div>
+
+              <div class="field full">
+                <label>Deskripsi Kegiatan</label>
+                <textarea class="textarea" id="deskripsi" placeholder="Jelaskan tujuan, agenda, dan detail kegiatan..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-h"><h3>🔁 Pengulangan Kegiatan</h3><span class="sub">Opsional untuk kegiatan rutin</span></div>
+          <div class="card-b">
+            <div class="form-grid">
+              <div class="field">
+                <label>Tipe Pengulangan</label>
+                <select class="select" id="recurring" onchange="toggleRecurring()">
+                  <option value="">Tidak berulang</option>
+                  <option value="harian">Harian</option>
+                  <option value="mingguan">Mingguan</option>
+                  <option value="bulanan">Bulanan</option>
+                  <option value="tahunan">Tahunan</option>
+                </select>
+              </div>
+              <div class="field" id="dowField" style="display:none">
+                <label>Hari</label>
+                <select class="select" id="dayOfWeek">
+                  <option value="1">Senin</option><option value="2">Selasa</option>
+                  <option value="3">Rabu</option><option value="4">Kamis</option>
+                  <option value="5">Jumat</option><option value="6">Sabtu</option>
+                  <option value="0">Minggu</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-h"><h3>🔔 Pengingat Otomatis</h3></div>
+          <div class="card-b">
+            <div class="flex gap-3" style="flex-wrap:wrap">
+              <label class="flex center gap-2" style="cursor:pointer"><input type="checkbox" checked> H-7 (7 hari sebelum)</label>
+              <label class="flex center gap-2" style="cursor:pointer"><input type="checkbox" checked> H-3 (3 hari sebelum)</label>
+              <label class="flex center gap-2" style="cursor:pointer"><input type="checkbox" checked> H-1 (1 hari sebelum)</label>
+            </div>
+            <p class="hint mt-3">Pengingat akan dikirim ke TU, penanggung jawab, dan unit terkait melalui notifikasi sistem & email.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-b flex between center" style="flex-wrap:wrap;gap:12px">
+            <div class="muted text-sm">Pastikan data kegiatan sudah benar sebelum disimpan.</div>
+            <div class="flex gap-2">
+              <a class="btn btn-outline" href="kegiatan.html">Batal</a>
+              <button type="button" class="btn btn-outline" onclick="alert('Draft disimpan (simulasi).')">Simpan Draft</button>
+              <button type="submit" class="btn btn-primary">Simpan &amp; Ajukan Verifikasi</button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </main>
+  </div>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (!getCurrentUser()) return;
+
+  document.getElementById('kategori').innerHTML = CATEGORIES.map(c => `<option value="${c.id}">${c.nama}</option>`).join('');
+  document.getElementById('unit').innerHTML = UNITS.map(u => `<option value="${u.id}">${u.nama}</option>`).join('');
+
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  if (id){
+    const ev = EVENTS.find(e => e.id === id);
+    if (ev){
+      document.getElementById('formMode').textContent = 'Edit Kegiatan · ' + ev.id;
+      document.getElementById('judul').value = ev.judul;
+      document.getElementById('kategori').value = ev.kategori;
+      document.getElementById('unit').value = ev.unit;
+      document.getElementById('mulai').value = ev.mulai;
+      document.getElementById('selesai').value = ev.selesai;
+      document.getElementById('waktu').value = ev.waktu;
+      document.getElementById('lokasi').value = ev.lokasi;
+      document.getElementById('pic').value = ev.pic;
+      document.getElementById('visibility').value = ev.visibility;
+      document.getElementById('deskripsi').value = ev.deskripsi || '';
+      if (ev.recurring){
+        document.getElementById('recurring').value = ev.recurring;
+        toggleRecurring();
+        if (ev.dayOfWeek !== undefined) document.getElementById('dayOfWeek').value = ev.dayOfWeek;
+      }
+    }
+  }
+  checkLeadTime();
+});
+
+function toggleRecurring(){
+  const v = document.getElementById('recurring').value;
+  document.getElementById('dowField').style.display = v === 'mingguan' ? 'flex' : 'none';
+}
+
+function checkLeadTime(){
+  const mulai = document.getElementById('mulai').value;
+  const info = document.getElementById('leadInfo');
+  if (!mulai) return;
+  const diff = Math.floor((new Date(mulai) - new Date('2026-10-14')) / 86400000);
+  if (diff < 7){
+    info.innerHTML = `<span style="color:var(--danger);font-weight:600">⚠️ Hanya ${diff} hari lagi. Kegiatan kurang dari H-7 memerlukan verifikasi khusus TU.</span>`;
+  } else {
+    info.innerHTML = `<span style="color:var(--success);font-weight:600">✓ Lead time terpenuhi (${diff} hari).</span>`;
+  }
+}
+
+function submitForm(e){
+  e.preventDefault();
+  openModal('Konfirmasi Simpan',
+    `<div class="alert alert-success">✓ Data kegiatan siap disimpan.</div>
+     <p>Kegiatan akan dikirim ke TU dan Wakasek untuk diverifikasi, lalu dipublikasikan ke kalender sekolah.</p>
+     <div class="info-list mt-4">
+       <dt>Nama</dt><dd>${document.getElementById('judul').value}</dd>
+       <dt>Tanggal</dt><dd>${fmtDate(document.getElementById('mulai').value, true)}</dd>
+       <dt>Lokasi</dt><dd>${document.getElementById('lokasi').value}</dd>
+       <dt>PJ</dt><dd>${document.getElementById('pic').value}</dd>
+     </div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Periksa Lagi</button>
+     <button class="btn btn-primary" onclick="closeModal();alert('Kegiatan berhasil disimpan (simulasi).');location.href='kegiatan.html'">Simpan &amp; Ajukan</button>`);
+}
+</script>
+</body>
+</html>

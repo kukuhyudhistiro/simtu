@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Login · SIMTU</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="login">
+
+<div class="login-wrap">
+  <div class="login-left">
+    <div class="login-brand">
+      <div class="logo">🏫</div>
+      <div>
+        <b>SMA Negeri 1 Nusantara</b>
+        <span>Sistem Informasi Tata Usaha</span>
+      </div>
+    </div>
+
+    <div class="login-hero">
+      <h1>Kelola Kegiatan &amp;<br>Persuratan Sekolah<br>dalam Satu Sistem.</h1>
+      <p>Satu tempat untuk kalender kegiatan harian, mingguan, bulanan, tahunan, serta permohonan surat yang terencana dan terdokumentasi rapi.</p>
+
+      <div class="login-feats">
+        <div class="login-feat"><i>📅</i><div><b>Kalender Terpusat</b><br>Semua kegiatan sekolah dapat dilihat guru &amp; staf.</div></div>
+        <div class="login-feat"><i>✉️</i><div><b>Surat Tidak Mendadak</b><br>Pengajuan surat dengan lead time &amp; approval berjenjang.</div></div>
+        <div class="login-feat"><i>📦</i><div><b>Arsip Digital</b><br>Nomor otomatis, arsip rapi, mudah dicari kembali.</div></div>
+      </div>
+    </div>
+
+    <div style="z-index:2;font-size:12px;opacity:.7">© 2026 SIMTU · Dikembangkan untuk Tata Usaha Sekolah</div>
+  </div>
+
+  <div class="login-right">
+    <div class="login-card">
+      <h2>Selamat Datang 👋</h2>
+      <p class="sub">Masuk untuk mengakses sistem informasi Tata Usaha</p>
+
+      <div id="loginAlert"></div>
+
+      <form onsubmit="doLogin(event)">
+        <div class="field mb-4">
+          <label>Username</label>
+          <input class="input" id="username" placeholder="Masukkan username" autocomplete="username" required>
+        </div>
+        <div class="field mb-4">
+          <label>Password</label>
+          <input class="input" id="password" type="password" placeholder="Masukkan password" autocomplete="current-password" required>
+        </div>
+        <div class="flex between center mb-4">
+          <label class="flex center gap-2 text-sm muted" style="cursor:pointer">
+            <input type="checkbox" id="remember"> Ingat saya
+          </label>
+          <a href="#" class="text-sm" style="color:var(--primary);font-weight:600" onclick="alert('Hubungi admin TU untuk reset password.');return false">Lupa password?</a>
+        </div>
+        <button class="btn btn-primary w-full" style="justify-content:center;padding:11px" type="submit">
+          Masuk ke Sistem →
+        </button>
+      </form>
+
+      <div class="demo-accounts">
+        <b>Akun Demo (klik untuk isi otomatis)</b>
+        <div class="demo-grid">
+          <button class="demo-btn" onclick="fill('admin','admin123')">👑 Super Admin</button>
+          <button class="demo-btn" onclick="fill('kepsek','kepsek123')">🎓 Kepala Sekolah</button>
+          <button class="demo-btn" onclick="fill('waka','waka123')">📘 Wakasek</button>
+          <button class="demo-btn" onclick="fill('kabagtu','tu123')">🗂️ Kepala TU</button>
+          <button class="demo-btn" onclick="fill('staftu','staf123')">📄 Staf TU</button>
+          <button class="demo-btn" onclick="fill('guru','guru123')">👨‍🏫 Guru / Staf</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+function fill(u,p){ document.getElementById('username').value=u; document.getElementById('password').value=p; }
+
+function doLogin(e){
+  e.preventDefault();
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value;
+  const remember = document.getElementById('remember').checked;
+  const alertBox = document.getElementById('loginAlert');
+
+  const user = USERS.find(x => x.username === u && x.password === p);
+  if (!user){
+    alertBox.innerHTML = `<div class="alert alert-danger">⚠️ <div><b>Login gagal.</b><br>Username atau password salah.</div></div>`;
+    return;
+  }
+  if (user.status !== 'aktif'){
+    alertBox.innerHTML = `<div class="alert alert-warning">⚠️ Akun Anda tidak aktif. Hubungi admin.</div>`;
+    return;
+  }
+  setCurrentUser(user, remember);
+  location.href = 'dashboard.html';
+}
+
+// Jika sudah login, langsung ke dashboard
+if (getCurrentUser()) location.href = 'dashboard.html';
+</script>
+</body>
+</html>

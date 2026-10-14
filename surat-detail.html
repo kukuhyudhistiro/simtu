@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Detail Surat · SIMTU</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="surat" data-title="Detail Permohonan Surat" data-crumb="Informasi lengkap dan riwayat permohonan">
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+
+    <main class="content">
+      <div class="flex between center mb-4" style="flex-wrap:wrap;gap:12px">
+        <a class="btn btn-ghost btn-sm" href="surat.html">← Kembali ke Daftar</a>
+        <div class="flex gap-2" id="actionButtons"></div>
+      </div>
+
+      <div id="detailContent"></div>
+    </main>
+  </div>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+let currentSurat = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const u = getCurrentUser();
+  if (!u) return;
+
+  const id = new URLSearchParams(location.search).get('id') || 'SR-2026-0041';
+  currentSurat = LETTER_REQUESTS.find(s => s.id === id);
+
+  if (!currentSurat){
+    document.getElementById('detailContent').innerHTML =
+      `<div class="card"><div class="empty"><div class="ic">🔎</div><h4>Permohonan tidak ditemukan</h4></div></div>`;
+    return;
+  }
+  render();
+});
+
+function render(){
+  const s = currentSurat;
+  const t = LETTER_TYPES.find(x => x.id === s.jenis);
+
+  document.getElementById('actionButtons').innerHTML = `
+    <button class="btn btn-outline" onclick="alert('Mencetak formulir permohonan (simulasi).')">🖨️ Cetak</button>
+    <button class="btn btn-outline" onclick="alert('Riwayat lengkap dibuka (simulasi).')">📜 Riwayat</button>
+    ${s.status === 'verifikasi' ? `<button class="btn btn-primary" onclick="doVerify()">✓ Verifikasi Sekarang</button>` : ''}
+    ${s.status === 'menunggu_approval' ? `<button class="btn btn-success" onclick="doApprove()">✓ Setujui</button>` : ''}
+    ${s.status === 'disetujui' ? `<button class="btn btn-primary" onclick="alert('Surat diproses dari template (simulasi).')">⚙️ Proses Surat</button>` : ''}
+  `;
+
+  document.getElementById('detailContent').innerHTML = `
+    <div class="grid-dash">
+      <div style="display:flex;flex-direction:column;gap:20px">
+
+        <div class="card">
+          <div class="card-h">
+            <h3>${s.jenisNama} · <span class="mono">${s.id}</span></h3>
+            <div class="spacer"></div>
+            ${statusBadge(s.status)}
+          </div>
+          <div class="card-b">
+            <div class="sec-title" style="margin-top:0">📋 Informasi Permohonan</div>
+            <dl class="info-list">
+              <dt>Keperluan</dt><dd>${s.keperluan}</dd>
+              <dt>Tujuan Surat</dt><dd>${s.tujuan}</dd>
+              <dt>Unit Pemohon</dt><dd>${unitName(s.unit)}</dd>
+              <dt>Prioritas</dt><dd>${priorityBadge(s.prioritas)}</dd>
+              <dt>Tanggal Pengajuan</dt><dd>${fmtDate(s.tanggalPengajuan, true)}</dd>
+              <dt>Tanggal Dibutuhkan</dt><dd>${fmtDate(s.tanggalDibutuhkan, true)}</dd>
+              <dt>Lead Time</dt><dd>${t ? t.leadTime + ' hari kerja' : '-'}</dd>
+              <dt>Lampiran</dt><dd>${s.lampiran ? `📎 ${s.lampiran}` : '<span class="muted">Tidak ada</span>'}</dd>
+            </dl>
+
+            ${s.prioritas !== 'normal' ? `
+              <div class="alert alert-warning mt-4">⚠️ <div><b>Permohonan mendadak.</b> Diajukan kurang dari lead time, memerlukan approval khusus.</div></div>` : ''}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h3>📜 Riwayat Proses</h3></div>
+          <div class="tl">
+            ${s.riwayat.slice().reverse().map(r => `
+              <div class="tl-item">
+                <div style="width:32px;height:32px;border-radius:50%;background:var(--primary-light);color:var(--primary);display:grid;place-items:center;font-size:14px;flex:none">●</div>
+                <div style="flex:1">
+                  <div style="font-weight:600;font-size:13.3px">${r.aksi}</div>
+                  <div class="muted text-sm">${r.aktor} · ${r.waktu}</div>
+                </div>
+                ${statusBadge(r.status)}
+              </div>`).join('')}
+          </div>
+        </div>
+
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:20px">
+
+        <div class="card">
+          <div class="card-h"><h3>👤 Pemohon</h3></div>
+          <div class="card-b">
+            <div class="row mb-4">
+              <div class="avatar" style="width:46px;height:46px;font-size:16px">${initialsOf(s.pemohon)}</div>
+              <div>
+                <div style="font-weight:700">${s.pemohon}</div>
+                <div class="muted text-sm">${unitName(s.unit)}</div>
+              </div>
+            </div>
+            <dl class="info-list">
+              <dt>Diajukan</dt><dd>${fmtDate(s.tanggalPengajuan)}</dd>
+              <dt>Status</dt><dd>${statusBadge(s.status)}</dd>
+            </dl>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h3>✅ Approval</h3></div>
+          <div class="card-b">
+            <div class="muted text-sm mb-2">Approver</div>
+            <div style="font-weight:600">${s.approver}</div>
+            ${s.approvedAt ? `<div class="badge badge-success mt-3">✓ Disetujui pada ${s.approvedAt}</div>` : `<div class="badge badge-warning mt-3">⏳ Menunggu approval</div>`}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h3>📄 Surat Final</h3></div>
+          <div class="card-b">
+            ${s.filePdf ? `
+              <dl class="info-list">
+                <dt>Nomor Surat</dt><dd><span class="mono">${s.nomorSurat}</span></dd>
+                <dt>Tanggal Surat</dt><dd>${fmtDate(s.tanggalSurat)}</dd>
+                <dt>Ditandatangani</dt><dd>${s.signedBy}</dd>
+              </dl>
+              <button class="btn btn-primary w-full mt-4" style="justify-content:center" onclick="alert('Membuka PDF: ${s.filePdf} (simulasi).')">📥 Unduh Surat PDF</button>
+            ` : `
+              <div class="empty" style="padding:30px 10px">
+                <div class="ic">📄</div>
+                <h4>Belum ada file final</h4>
+                <p>Surat akan tersedia setelah diproses dan ditandatangani.</p>
+              </div>`}
+          </div>
+        </div>
+
+      </div>
+    </div>`;
+}
+
+function doVerify(){
+  openModal('Verifikasi Permohonan',
+    `<p>Verifikasi kelengkapan permohonan <b>${currentSurat.id}</b>?</p>
+     <div class="field mt-4"><label>Catatan (opsional)</label><textarea class="textarea" placeholder="Catatan verifikasi..."></textarea></div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Batal</button>
+     <button class="btn btn-primary" onclick="closeModal();alert('Permohonan diverifikasi (simulasi).')">Verifikasi</button>`);
+}
+function doApprove(){
+  openModal('Approval Permohonan',
+    `<div class="alert alert-info">ℹ️ Permohonan <b>${currentSurat.id}</b> akan disetujui.</div>
+     <div class="field mt-4"><label>Catatan (opsional)</label><textarea class="textarea" placeholder="Catatan approval..."></textarea></div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Batal</button>
+     <button class="btn btn-danger" onclick="closeModal();alert('Permohonan ditolak (simulasi).')">Tolak</button>
+     <button class="btn btn-success" onclick="closeModal();alert('Permohonan disetujui (simulasi).')">Setujui</button>`);
+}
+</script>
+</body>
+</html>
